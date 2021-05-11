@@ -5,21 +5,24 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Ellipse;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class Player {
 
-    private static final float CIRCLE_RADIUS = 5f; // == temporary, prone to change == //
-    private static final float SPEED = 10f;
-    private TextureRegion textureRegion;
-    private Circle collisionCircle;
+//    private static final float CIRCLE_RADIUS = 14f; // == temporary, prone to change == //
+    private static final float SPEED = 100f;
+    private final TextureRegion textureRegion;
     private float x;
     private float y;
+    private Ellipse ellipse;
 
     public Player(TextureRegion textureRegion) {
         this.textureRegion = textureRegion;
-        collisionCircle = new Circle(x, y, CIRCLE_RADIUS);
+        Circle collisionCircle = new Circle();
+        ellipse = new Ellipse(collisionCircle);
+        ellipse.setSize(30, 35);
     }
     /**
      * NOTE - This methods starts a new rendering.
@@ -27,17 +30,21 @@ public class Player {
      * because the ShapeType needs to be Line, not Filled.
      * @param shapeRenderer
      */
-    private void drawDebugCircle(ShapeRenderer shapeRenderer) {
+    public void drawDebugCircle(ShapeRenderer shapeRenderer) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.circle(collisionCircle.x, collisionCircle.y, CIRCLE_RADIUS);
+//        shapeRenderer.circle(collisionCircle.x, collisionCircle.y, CIRCLE_RADIUS);
+        shapeRenderer.ellipse(ellipse.x, ellipse.y, ellipse.width, ellipse.height, 40);
         shapeRenderer.end();
     }
 
     public void draw(SpriteBatch batch) {
         // Center Player's x and y relative to the center of the Circle's.
-        float textureX = collisionCircle.x - (float) textureRegion.getRegionWidth() / 2;
-        float textureY = collisionCircle.y - (float) textureRegion.getRegionHeight() / 2;
-        batch.draw(textureRegion, textureX, textureY);
+//        float textureX = ellipse.x - (float) textureRegion.getRegionWidth() / 2;
+//        float textureY = ellipse.y - (float) textureRegion.getRegionHeight() / 2;
+//        batch.draw(textureRegion, textureX, textureY);
+//        batch.draw(textureRegion,
+//                ellipse.x - (textureRegion.getRegionWidth()), ellipse.y);
+        batch.draw(textureRegion,ellipse.x, ellipse.y);
     }
 
     public void setPosition(float x, float y) {
@@ -46,12 +53,19 @@ public class Player {
         updateCollisionCircle();
     }
     private void updateCollisionCircle() {
-        collisionCircle.x = x;
-        collisionCircle.y = y;
+        ellipse.x = this.x;
+        ellipse.y = this.y;
     }
 
     public TextureRegion getTextureRegion() {
         return textureRegion;
+    }
+
+    public void moveUp(float dt) {
+        setPosition(x, y + (SPEED * dt));
+    }
+    public void moveDown(float dt) {
+        setPosition(x, y - (SPEED * dt));
     }
 
     public float getX() {
@@ -60,5 +74,9 @@ public class Player {
 
     public float getY() {
         return y;
+    }
+
+    public Ellipse getEllipse() {
+        return this.ellipse;
     }
 }

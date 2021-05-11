@@ -1,6 +1,7 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
@@ -98,6 +100,9 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.rect(rectangleBetweenPlayers.x, rectangleBetweenPlayers.y,
                 rectangleBetweenPlayers.width, rectangleBetweenPlayers.height);
         shapeRenderer.end();
+        player1.drawDebugCircle(shapeRenderer);
+        player2.drawDebugCircle(shapeRenderer);
+
     }
     private void createCirclesToRight() {
         float randX = MathUtils.random(WORLD_WIDTH);
@@ -125,10 +130,40 @@ public class GameScreen extends ScreenAdapter {
                 Color.valueOf("#2b2e3b").b, Color.valueOf("#2b2e3b").a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
+    private boolean checkCollisionPlayer1() {
+        for (Circle c : circleArrayToLeft) {
+            return player1.getEllipse().contains(c.x, c.y);
+        }
+        for (Circle c : circleArrayToRight) {
+            return player1.getEllipse().contains(c.x, c.y);
+        }
+        return false;
+    }
 
+
+    // UNFINISHED CODE -- REVERT BACK TO CIRCLE CLASS TO EASILY HANDLE COLLISIONS---
+    // WILL UPDATE TOMORROW
+    private boolean checkCollisionPlayer2() {
+        for (Circle c : circleArrayToLeft) {
+//            return player2.getEllipse().contains(c.x, c.y);
+        }
+        for (Circle c : circleArrayToRight) {
+//            return player2.getEllipse().contains(c.x, c.y);
+        }
+        return false;
+    }
     private void update(float dt) {
         timer += dt;
-        // move circles
+
+        // == collision detection == //
+        if (checkCollisionPlayer1()){
+            System.out.println("PLAYER 1 COLLISION DETECTED");
+        }
+        if (checkCollisionPlayer2()) {
+            System.out.println("PLAYER 2 COLLISION DETECTED");
+        }
+
+        // == move circles == //
         for (Circle c : circleArrayToLeft) {
             c.x = c.x  - (CIRCLE_SPEED * dt);
 
@@ -148,6 +183,24 @@ public class GameScreen extends ScreenAdapter {
                 c.y = randY;
             }
         }
+
+        // === Player 1 controls === //
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            player1.moveUp(dt);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            player1.moveDown(dt);
+        }
+
+        // === Player 2 controls === //
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            player2.moveUp(dt);
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.S)){
+            player2.moveDown(dt);
+        }
+
     }
 
     private void draw() {
