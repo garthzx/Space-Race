@@ -2,10 +2,12 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.assets.loaders.BitmapFontLoader;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -41,8 +43,12 @@ public class LoadingScreen extends ScreenAdapter {
         viewport = new ExtendViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
 
         spaceRaceGame.getAssetManager().getLogger().setLevel(Logger.DEBUG);
-
+        BitmapFontLoader.BitmapFontParameter bitmapFontParameter =
+                new BitmapFontLoader.BitmapFontParameter();
+        bitmapFontParameter.atlasName = "Space-Race-Game.atlas";
+        spaceRaceGame.getAssetManager().load("gomarice.fnt", BitmapFont.class);
         spaceRaceGame.getAssetManager().load("Space-Race-Game.atlas", TextureAtlas.class);
+
     }
 
     @Override
@@ -56,6 +62,7 @@ public class LoadingScreen extends ScreenAdapter {
 
     private void update() {
         if (spaceRaceGame.getAssetManager().update()) {
+            spaceRaceGame.getAssetManager().finishLoading();
             spaceRaceGame.setScreen(new GameScreen(spaceRaceGame));
         }
         else {

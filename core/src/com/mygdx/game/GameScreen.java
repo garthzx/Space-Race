@@ -7,15 +7,14 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Logger;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -35,6 +34,7 @@ public class GameScreen extends ScreenAdapter {
 
     private Rectangle rectangleBetweenPlayers;
 
+    // originally 4
     private static final float CIRCLE_RADIUS = 4;
 
     private float timer = 0;
@@ -43,6 +43,15 @@ public class GameScreen extends ScreenAdapter {
 
     private Player player1;
     private Player player2;
+
+    private BitmapFont bitmapFont;
+    private GlyphLayout glyphLayout;
+
+    private int player1Score = 0;
+    private int player2Score = 0;
+
+    private boolean player1PointClaimed = false;
+    private boolean player2PointClaimed = false;
 
     public GameScreen(SpaceRaceGame spaceRaceGame) {
         this.spaceRaceGame = spaceRaceGame;
@@ -78,6 +87,9 @@ public class GameScreen extends ScreenAdapter {
         rectangleBetweenPlayers = new Rectangle((player1.getX() + player2.getX()) / 2,
                                                 10, 10,50);
 
+        bitmapFont = spaceRaceGame.getAssetManager().get("gomarice.fnt");
+        glyphLayout = new GlyphLayout();
+
     }
     @Override
     public void render(float delta) {
@@ -91,18 +103,52 @@ public class GameScreen extends ScreenAdapter {
         update(delta);
 
     }
+    private void updateScore() {
+        if (player1.getY() + player1.getTextureRegion().getRegionWidth() > WORLD_HEIGHT
+                && !isPlayer1PointClaimed()) {
+            player1Score++;
+            setPlayer1MarkPointClaimed(true);
+            System.out.println("PLAYER 1= " + player1Score);
+        }
+        else if (player2.getY() + player2.getTextureRegion().getRegionWidth() > WORLD_HEIGHT
+                && !isPlayer2PointClaimed()) {
+            player2Score++;
+            setPlayer2PointClaimer(true);
+            System.out.println("PLAYER 2= " + player2Score);
+        }
+    }
 
+    private void drawScore() {
+        String player1ScoreAsString = Integer.toString(player1Score);
+        glyphLayout.setText(bitmapFont, player1ScoreAsString);
+
+        bitmapFont.draw(batch, player1ScoreAsString,
+                ((player1.getX() + rectangleBetweenPlayers.x) / 2) + glyphLayout.width,
+                START_LINE / 2);
+
+        String player2ScoreAsString = Integer.toString(player2Score);
+        glyphLayout.setText(bitmapFont, player2ScoreAsString);
+
+        bitmapFont.draw(batch, player2ScoreAsString,
+                ((player2.getX() + rectangleBetweenPlayers.x) / 2) - glyphLayout.width,
+                START_LINE / 2);
+    }
     private void drawDebugAll() {
+
         shapeRenderer.setColor(Color.WHITE);
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setProjectionMatrix(camera.projection);
+        shapeRenderer.setTransformMatrix(camera.view);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         drawDebugAllCircles();
         shapeRenderer.rect(rectangleBetweenPlayers.x, rectangleBetweenPlayers.y,
                 rectangleBetweenPlayers.width, rectangleBetweenPlayers.height);
         shapeRenderer.end();
+
+        // new Shape batch
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         player1.drawDebugCircle(shapeRenderer);
         player2.drawDebugCircle(shapeRenderer);
-
+        shapeRenderer.end();
     }
     private void createCirclesToRight() {
         float randX = MathUtils.random(WORLD_WIDTH);
@@ -130,41 +176,36 @@ public class GameScreen extends ScreenAdapter {
                 Color.valueOf("#2b2e3b").b, Color.valueOf("#2b2e3b").a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
-    private boolean checkCollisionPlayer1() {
-        for (Circle c : circleArrayToLeft) {
-            return player1.getEllipse().contains(c.x, c.y);
-        }
-        for (Circle c : circleArrayToRight) {
-            return player1.getEllipse().contains(c.x, c.y);
-        }
-        return false;
+
+    private boolean checkCollisionPlayer(Circle player, Circle c) {
+        return Intersector.overlaps(c, player);
     }
 
-
-    // UNFINISHED CODE -- REVERT BACK TO CIRCLE CLASS TO EASILY HANDLE COLLISIONS---
-    // WILL UPDATE TOMORROW
-    private boolean checkCollisionPlayer2() {
-        for (Circle c : circleArrayToLeft) {
-//            return player2.getEllipse().contains(c.x, c.y);
-        }
-        for (Circle c : circleArrayToRight) {
-//            return player2.getEllipse().contains(c.x, c.y);
-        }
-        return false;
-    }
     private void update(float dt) {
         timer += dt;
 
-        // == collision detection == //
-        if (checkCollisionPlayer1()){
-            System.out.println("PLAYER 1 COLLISION DETECTED");
-        }
-        if (checkCollisionPlayer2()) {
-            System.out.println("PLAYER 2 COLLISION DETECTED");
-        }
-
         // == move circles == //
         for (Circle c : circleArrayToLeft) {
+
+            if (checkCollisionPlayer(player1.getCircle(), c)) {
+                // == FOR DEBUGGING PURPOSES === //
+//                System.out.println("c= " + c.toString());
+//                System.out.println("player1= " + player1.getCircle().toString());
+//                System.out.println("player2= " + player2.getCircle().toString());
+//
+//                System.out.println("PLAYER 1 COLLISION DETECTED");
+            }
+
+            if (checkCollisionPlayer(player2.getCircle(), c)) {
+                // == FOR DEBUGGING PURPOSES === //
+//                System.out.println("c= " + c.toString());
+//                System.out.println("player1= " + player1.getCircle().toString());
+//                System.out.println("player2= " + player2.getCircle().toString());
+//
+//                System.out.println("PLAYER 2 COLLISION DETECTED");
+            }
+
+            // update every circle's x
             c.x = c.x  - (CIRCLE_SPEED * dt);
 
             if (c.x + c.radius < 0) {
@@ -175,6 +216,25 @@ public class GameScreen extends ScreenAdapter {
         }
 
         for (Circle c : circleArrayToRight) {
+
+            if (checkCollisionPlayer(player1.getCircle(), c)) {
+                // == FOR DEBUGGING PURPOSES === //
+//                System.out.println("c= " + c.toString());
+//                System.out.println("player1= " + player1.getCircle().toString());
+//                System.out.println("player2= " + player2.getCircle().toString());
+//
+//                System.out.println("PLAYER 1 COLLISION DETECTED");
+            }
+
+            if (checkCollisionPlayer(player2.getCircle(), c)) {
+                // == FOR DEBUGGING PURPOSES === //
+//                System.out.println("c= " + c.toString());
+//                System.out.println("player1= " + player1.getCircle().toString());
+//                System.out.println("player2= " + player2.getCircle().toString());
+//
+//                System.out.println("PLAYER 2 COLLISION DETECTED");
+            }
+
             c.x = c.x + (CIRCLE_SPEED * dt);
 
             if (c.x + c.radius > WORLD_WIDTH) {
@@ -184,25 +244,36 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
-        // === Player 1 controls === //
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+        // === Left Player 1 controls === //
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
             player1.moveUp(dt);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             player1.moveDown(dt);
         }
 
-        // === Player 2 controls === //
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+        // === Right Player 2 controls === //
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             player2.moveUp(dt);
         }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.S)){
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)){
             player2.moveDown(dt);
         }
 
+        updateScore();
     }
-
+    private boolean isPlayer1PointClaimed() {
+        return player1PointClaimed;
+    }
+    private boolean isPlayer2PointClaimed() {
+        return player2PointClaimed;
+    }
+    private void setPlayer1MarkPointClaimed(boolean b) {
+        player1PointClaimed = b;
+    }
+    private void setPlayer2PointClaimer(boolean b) {
+        player2PointClaimed = b;
+    }
     private void draw() {
         batch.setProjectionMatrix(camera.projection);
         batch.setTransformMatrix(camera.view);
@@ -210,6 +281,7 @@ public class GameScreen extends ScreenAdapter {
         batch.begin();
         player1.draw(batch);
         player2.draw(batch);
+        drawScore();
         batch.end();
 
     }
@@ -223,6 +295,6 @@ public class GameScreen extends ScreenAdapter {
     public void dispose() {
         batch.dispose();
         shapeRenderer.dispose();
-
+        spaceRaceGame.getAssetManager().dispose();
     }
 }
