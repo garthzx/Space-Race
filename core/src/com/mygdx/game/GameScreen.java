@@ -296,5 +296,6 @@ public class GameScreen extends ScreenAdapter {
         batch.dispose();
         shapeRenderer.dispose();
         spaceRaceGame.getAssetManager().dispose();
+        bitmapFont.dispose();
     }
 }
