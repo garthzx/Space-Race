@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -13,14 +14,17 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Logger;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-public class GameScreen extends ScreenAdapter {
-
+public class GameScreen extends ScreenAdapter implements InputProcessor {
+    private enum State {
+        RUNNING, PAUSED, ROUND
+    }
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 480;
     private Camera camera;
@@ -52,6 +56,12 @@ public class GameScreen extends ScreenAdapter {
 
     private boolean player1PointClaimed = false;
     private boolean player2PointClaimed = false;
+
+    private State state = State.RUNNING;
+
+    private String messageWhoWon;
+
+    private boolean pressedEscape = false;
 
     public GameScreen(SpaceRaceGame spaceRaceGame) {
         this.spaceRaceGame = spaceRaceGame;
@@ -90,18 +100,26 @@ public class GameScreen extends ScreenAdapter {
         bitmapFont = spaceRaceGame.getAssetManager().get("gomarice.fnt");
         glyphLayout = new GlyphLayout();
 
+        state = State.RUNNING;
+        Gdx.input.setInputProcessor(this);
     }
+
     @Override
     public void render(float delta) {
-
         clearScreen();
-
         draw();
-
-        drawDebugAll();
-
-        update(delta);
-
+        renderDebugAll();
+        switch (state){
+            case RUNNING:
+                update(delta);
+                break;
+            case ROUND:
+                showMessageOnRound(delta);
+                break;
+            case PAUSED:
+                showMessageOnPause();
+                break;
+        }
     }
 
     private void updateScore() {
@@ -119,13 +137,26 @@ public class GameScreen extends ScreenAdapter {
             System.out.println("PLAYER 2= " + player2Score);
         }
     }
-
+    private void showMessageOnRound(float delta) {
+        if (timer <= 3){
+            timer += delta;
+            batch.begin();
+            glyphLayout.setText(bitmapFont, messageWhoWon);
+            bitmapFont.draw(batch, glyphLayout, (WORLD_WIDTH / 2) - (glyphLayout.width / 2),
+                    WORLD_HEIGHT / 2);
+            batch.end();
+        }
+        else {
+            state = State.RUNNING;
+            timer = 0;
+        }
+    }
     private void newRound() {
-            // return them to their current position
-            setPlayer1MarkPointClaimed(false);
-            setPlayer2MarkPointClaimed(false);
-            player1.setPosition(WORLD_WIDTH / 3, START_LINE / 2);
-            player2.setPosition(WORLD_WIDTH / 1.5f, START_LINE / 2);
+        // return them to their current position
+        setPlayer1MarkPointClaimed(false);
+        setPlayer2MarkPointClaimed(false);
+        player1.setPosition(WORLD_WIDTH / 3, START_LINE / 2);
+        player2.setPosition(WORLD_WIDTH / 1.5f, START_LINE / 2);
     }
 
     private void drawScore() {
@@ -144,7 +175,7 @@ public class GameScreen extends ScreenAdapter {
                 START_LINE / 2);
     }
 
-    private void drawDebugAll() {
+    private void renderDebugAll() {
 
         shapeRenderer.setColor(Color.WHITE);
         shapeRenderer.setProjectionMatrix(camera.projection);
@@ -194,9 +225,9 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void update(float dt) {
-        timer += dt;
-
+        messageWhoWon = player1PointClaimed ? "Left Player Got First!" : "Right Player Got First!";
         if (player1PointClaimed || player2PointClaimed) {
+            state = State.ROUND;
             newRound();
         }
 
@@ -280,6 +311,7 @@ public class GameScreen extends ScreenAdapter {
         updateScore();
     }
 
+    // === pointClaimed methods fixes issue in setting score. === //
     private boolean isPlayer1PointClaimed() {
         return player1PointClaimed;
     }
@@ -318,5 +350,65 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.dispose();
         spaceRaceGame.getAssetManager().dispose(); // this disposes all textures
         bitmapFont.dispose();
+    }
+
+    private void showMessageOnPause() {
+        batch.begin();
+        glyphLayout.setText( bitmapFont,"PAUSED");
+        bitmapFont.draw(batch, glyphLayout, (WORLD_WIDTH / 2) - (glyphLayout.width / 2),
+                WORLD_HEIGHT / 2);
+        batch.end();
+    }
+    @Override
+    public boolean keyDown(int keycode) {
+        // == This pauses the game == //
+        if (keycode == Input.Keys.ESCAPE && !pressedEscape) {
+            pressedEscape = true;
+            state = State.PAUSED;
+            System.out.println("keyDown() called!");
+            return true;
+        }
+        // == This resumes the game == //
+        if (keycode == Input.Keys.ESCAPE) {
+            state = State.RUNNING;
+            pressedEscape = false;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        return false;
     }
 }
