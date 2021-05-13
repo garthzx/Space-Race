@@ -103,6 +103,7 @@ public class GameScreen extends ScreenAdapter {
         update(delta);
 
     }
+
     private void updateScore() {
         if (player1.getY() > WORLD_HEIGHT + player1.getTextureRegion().getRegionHeight()
                 && !isPlayer1PointClaimed()) {
@@ -118,6 +119,7 @@ public class GameScreen extends ScreenAdapter {
             System.out.println("PLAYER 2= " + player2Score);
         }
     }
+
     private void newRound() {
             // return them to their current position
             setPlayer1MarkPointClaimed(false);
@@ -125,6 +127,7 @@ public class GameScreen extends ScreenAdapter {
             player1.setPosition(WORLD_WIDTH / 3, START_LINE / 2);
             player2.setPosition(WORLD_WIDTH / 1.5f, START_LINE / 2);
     }
+
     private void drawScore() {
         String player1ScoreAsString = Integer.toString(player1Score);
         glyphLayout.setText(bitmapFont, player1ScoreAsString);
@@ -140,6 +143,7 @@ public class GameScreen extends ScreenAdapter {
                 ((player2.getX() + rectangleBetweenPlayers.x) / 2) - glyphLayout.width,
                 START_LINE / 2);
     }
+
     private void drawDebugAll() {
 
         shapeRenderer.setColor(Color.WHITE);
@@ -191,10 +195,11 @@ public class GameScreen extends ScreenAdapter {
 
     private void update(float dt) {
         timer += dt;
+
         if (player1PointClaimed || player2PointClaimed) {
             newRound();
         }
-            // == move circles == //
+
         for (Circle c : circleArrayToLeft) {
 
             if (checkCollisionPlayer(player1.getCircle(), c)) {
@@ -215,6 +220,7 @@ public class GameScreen extends ScreenAdapter {
 //                System.out.println("PLAYER 2 COLLISION DETECTED");
             }
 
+            // == move circles == //
             // update every circle's x
             c.x = c.x  - (CIRCLE_SPEED * dt);
 
@@ -245,6 +251,7 @@ public class GameScreen extends ScreenAdapter {
 //                System.out.println("PLAYER 2 COLLISION DETECTED");
             }
 
+            // == move circles == //
             c.x = c.x + (CIRCLE_SPEED * dt);
 
             if (c.x + c.radius > WORLD_WIDTH) {
@@ -309,7 +316,7 @@ public class GameScreen extends ScreenAdapter {
     public void dispose() {
         batch.dispose();
         shapeRenderer.dispose();
-        spaceRaceGame.getAssetManager().dispose();
+        spaceRaceGame.getAssetManager().dispose(); // this disposes all textures
         bitmapFont.dispose();
     }
 }

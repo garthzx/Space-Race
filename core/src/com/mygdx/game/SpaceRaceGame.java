@@ -15,7 +15,7 @@ public class SpaceRaceGame extends Game {
 	@Override
 	public void create() {
 		assetManager = new AssetManager();
-		this.setScreen(new LoadingScreen(this));
+		this.setScreen(new StartScreen(this));
 	}
 
 	public AssetManager getAssetManager() {
