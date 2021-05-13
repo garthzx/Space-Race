@@ -104,20 +104,27 @@ public class GameScreen extends ScreenAdapter {
 
     }
     private void updateScore() {
-        if (player1.getY() + player1.getTextureRegion().getRegionWidth() > WORLD_HEIGHT
+        if (player1.getY() > WORLD_HEIGHT + player1.getTextureRegion().getRegionHeight()
                 && !isPlayer1PointClaimed()) {
             player1Score++;
             setPlayer1MarkPointClaimed(true);
             System.out.println("PLAYER 1= " + player1Score);
         }
-        else if (player2.getY() + player2.getTextureRegion().getRegionWidth() > WORLD_HEIGHT
+
+        else if (player2.getY() > WORLD_HEIGHT + player2.getTextureRegion().getRegionHeight()
                 && !isPlayer2PointClaimed()) {
             player2Score++;
-            setPlayer2PointClaimer(true);
+            setPlayer2MarkPointClaimed(true);
             System.out.println("PLAYER 2= " + player2Score);
         }
     }
-
+    private void newRound() {
+            // return them to their current position
+            setPlayer1MarkPointClaimed(false);
+            setPlayer2MarkPointClaimed(false);
+            player1.setPosition(WORLD_WIDTH / 3, START_LINE / 2);
+            player2.setPosition(WORLD_WIDTH / 1.5f, START_LINE / 2);
+    }
     private void drawScore() {
         String player1ScoreAsString = Integer.toString(player1Score);
         glyphLayout.setText(bitmapFont, player1ScoreAsString);
@@ -150,6 +157,7 @@ public class GameScreen extends ScreenAdapter {
         player2.drawDebugCircle(shapeRenderer);
         shapeRenderer.end();
     }
+
     private void createCirclesToRight() {
         float randX = MathUtils.random(WORLD_WIDTH);
         float randY = MathUtils.random(START_LINE, WORLD_HEIGHT);
@@ -183,8 +191,10 @@ public class GameScreen extends ScreenAdapter {
 
     private void update(float dt) {
         timer += dt;
-
-        // == move circles == //
+        if (player1PointClaimed || player2PointClaimed) {
+            newRound();
+        }
+            // == move circles == //
         for (Circle c : circleArrayToLeft) {
 
             if (checkCollisionPlayer(player1.getCircle(), c)) {
@@ -262,18 +272,23 @@ public class GameScreen extends ScreenAdapter {
 
         updateScore();
     }
+
     private boolean isPlayer1PointClaimed() {
         return player1PointClaimed;
     }
+
     private boolean isPlayer2PointClaimed() {
         return player2PointClaimed;
     }
+
     private void setPlayer1MarkPointClaimed(boolean b) {
         player1PointClaimed = b;
     }
-    private void setPlayer2PointClaimer(boolean b) {
+
+    private void setPlayer2MarkPointClaimed(boolean b) {
         player2PointClaimed = b;
     }
+
     private void draw() {
         batch.setProjectionMatrix(camera.projection);
         batch.setTransformMatrix(camera.view);
@@ -283,7 +298,6 @@ public class GameScreen extends ScreenAdapter {
         player2.draw(batch);
         drawScore();
         batch.end();
-
     }
 
     @Override
