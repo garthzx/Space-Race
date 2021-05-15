@@ -23,7 +23,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class GameScreen extends ScreenAdapter implements InputProcessor {
     private enum State {
-        RUNNING, PAUSED, ROUND
+        RUNNING, PAUSED, ROUND, HIT
     }
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 480;
@@ -39,7 +39,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private Rectangle rectangleBetweenPlayers;
 
     // originally 4
-    private static final float CIRCLE_RADIUS = 4;
+    private static final float CIRCLE_RADIUS = 3;
 
     private float timer = 0;
     private static final float CIRCLE_SPEED = 75;
@@ -119,6 +119,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             case PAUSED:
                 showMessageOnPause();
                 break;
+            case HIT:
+                showMessageOnHit(delta);
+                break;
         }
     }
 
@@ -137,6 +140,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             System.out.println("PLAYER 2= " + player2Score);
         }
     }
+
     private void showMessageOnRound(float delta) {
         if (timer <= 3){
             timer += delta;
@@ -188,8 +192,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         // new Shape batch
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        player1.drawDebugCircle(shapeRenderer);
-        player2.drawDebugCircle(shapeRenderer);
+//        player1.drawDebugCircle(shapeRenderer);
+//        player2.drawDebugCircle(shapeRenderer);
         shapeRenderer.end();
     }
 
@@ -224,6 +228,21 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         return Intersector.overlaps(c, player);
     }
 
+    private void showMessageOnHit(float delta) {
+        String playerOneMessage = "PLAYER ONE GOT HIT!";
+        if (timer <= 3){
+            timer += delta;
+            batch.begin();
+            glyphLayout.setText(bitmapFont, playerOneMessage);
+            bitmapFont.draw(batch, glyphLayout, (WORLD_WIDTH / 2) - (glyphLayout.width / 2),
+                    WORLD_HEIGHT / 2);
+            batch.end();
+        }
+        else {
+            state = State.RUNNING;
+            timer = 0;
+        }
+    }
     private void update(float dt) {
         messageWhoWon = player1PointClaimed ? "Left Player Got First!" : "Right Player Got First!";
         if (player1PointClaimed || player2PointClaimed) {
@@ -234,21 +253,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         for (Circle c : circleArrayToLeft) {
 
             if (checkCollisionPlayer(player1.getCircle(), c)) {
-                // == FOR DEBUGGING PURPOSES === //
-//                System.out.println("c= " + c.toString());
-//                System.out.println("player1= " + player1.getCircle().toString());
-//                System.out.println("player2= " + player2.getCircle().toString());
-//
-//                System.out.println("PLAYER 1 COLLISION DETECTED");
+                player2Score++;
+                state = State.HIT;
+                newRound();
             }
-
             if (checkCollisionPlayer(player2.getCircle(), c)) {
-                // == FOR DEBUGGING PURPOSES === //
-//                System.out.println("c= " + c.toString());
-//                System.out.println("player1= " + player1.getCircle().toString());
-//                System.out.println("player2= " + player2.getCircle().toString());
-//
-//                System.out.println("PLAYER 2 COLLISION DETECTED");
+                player1Score++;
+                state = State.HIT;
+                newRound();
             }
 
             // == move circles == //
@@ -265,21 +277,15 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         for (Circle c : circleArrayToRight) {
 
             if (checkCollisionPlayer(player1.getCircle(), c)) {
-                // == FOR DEBUGGING PURPOSES === //
-//                System.out.println("c= " + c.toString());
-//                System.out.println("player1= " + player1.getCircle().toString());
-//                System.out.println("player2= " + player2.getCircle().toString());
-//
-//                System.out.println("PLAYER 1 COLLISION DETECTED");
+                player2Score++;
+                state = State.HIT;
+                newRound();
             }
 
             if (checkCollisionPlayer(player2.getCircle(), c)) {
-                // == FOR DEBUGGING PURPOSES === //
-//                System.out.println("c= " + c.toString());
-//                System.out.println("player1= " + player1.getCircle().toString());
-//                System.out.println("player2= " + player2.getCircle().toString());
-//
-//                System.out.println("PLAYER 2 COLLISION DETECTED");
+                player1Score++;
+                state = State.HIT;
+                newRound();
             }
 
             // == move circles == //
